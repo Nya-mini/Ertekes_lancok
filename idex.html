@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyöngyfűzés Kihívás</title>
+    <!-- Tailwind CSS a gyors és szép stílusozáshoz -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* A gyöngyök vizuális alapja */
+        .bead-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: white;
+            /* Eredeti árnyék helyett 3D-s/domború hatás */
+            box-shadow: 
+                inset 0 0 10px rgba(0, 0, 0, 0.4), /* Belső árnyék a kiemeléshez */
+                0 6px 10px -3px rgba(0, 0, 0, 0.3); /* Külső árnyék a lebegéshez */
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            margin: 0 1px;
+            border: 2px solid rgba(255, 255, 255, 0.5); /* Fényes keret */
+        }
+        /* Piros gyöngy - 3D hatással */
+        .bead-P {
+            background-color: #d83b3b; /* kicsit sötétebb alap */
+            /* Sugárirányú színátmenet a fényhatásért: világosabb pont (25% 25%) felül */
+            background-image: radial-gradient(circle at 25% 25%, #ff7777, #d83b3b 60%, #a02222);
+        }
+        /* Kék gyöngy - 3D hatással */
+        .bead-K {
+            background-color: #2c6eb8; /* kicsit sötétebb alap */
+            background-image: radial-gradient(circle at 25% 25%, #6aaaff, #2c6eb8 60%, #1a4d8c);
+        }
+        
+        /* --- GOMB STÍLUSOK FRISSÍTÉSE --- */
+        
+        /* Gombok és kártyák általános stílusa */
+        .custom-button {
+            transition: all 0.15s ease-in-out;
+            transform: translateY(0);
+            border-radius: 0.5rem; /* Sarok lekerekítés biztosítása */
+        }
+        .custom-button:hover {
+            transform: translateY(-2px); /* Enyhe megemelkedés */
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+        .custom-button:active {
+            transform: translateY(1px); /* Lenyomott hatás */
+            box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.2); /* Belső árnyék a nyomott érzésért */
+        }
+
+        /* Színes gombok (Kihívás választó és Add gombok) extra mélységgel */
+        .colored-button {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        }
+        
+        /* Színátmenetek az ADD gombokhoz (hasonlóan a gyöngyökhöz, de visszafogottabban) */
+        .add-button-P {
+            background-image: linear-gradient(to bottom, #ef4444, #b91c1c); /* Red-500-tól Red-700-ig */
+        }
+        .add-button-P:hover {
+            background-image: linear-gradient(to bottom, #f87171, #ef4444); /* Világosabb hoveren */
+        }
+        
+        .add-button-K {
+            background-image: linear-gradient(to bottom, #3b82f6, #1d4ed8); /* Blue-500-tól Blue-700-ig */
+        }
+        .add-button-K:hover {
+            background-image: linear-gradient(to bottom, #60a5fa, #3b82f6); /* Világosabb hoveren */
+        }
+
+        /* Értékelés gomb (fő CTA) */
+        .evaluate-cta {
+            background-image: linear-gradient(to bottom right, #6366f1, #4f46e5); /* Indigo színátmenet */
+        }
+        .evaluate-cta:hover {
+            background-image: linear-gradient(to bottom right, #818cf8, #6366f1);
+        }
+        .evaluate-cta:disabled {
+            background-image: none;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Törlés gomb (semleges/másodlagos) */
+        .remove-button {
+            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            border: 1px solid #d1d5db; /* gray-300 */
+        }
+        .remove-button:hover {
+            background-color: #e5e7eb; /* gray-200 */
+            transform: translateY(-1px);
+        }
+        .remove-button:active {
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Kisebb gyöngyikon a gombokban (inline stílussal is beállítva, ez a fallback) */
+        .button-bead-icon {
+            width: 30px; 
+            height: 30px; 
+            font-size: 1rem; 
+            margin: 0;
+            /* A gomb ikonjainak különleges árnyékolása, hogy ne legyen túl hangsúlyos */
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3); 
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Gyűrű stílusok a kihívások kiválasztásánál */
+        /* Ezeket frissítem, hogy a ring jobban illeszkedjen a gomb stílusához */
+        .ring-green-300 { --tw-ring-color: #bbf7d0; } /* light green */
+        .ring-purple-300 { --tw-ring-color: #e9d5ff; } /* light purple */
+        .ring-orange-300 { --tw-ring-color: #fed7aa; } /* light orange */
+        
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-start justify-center p-4 sm:p-8 font-sans">
+
+    <!-- Fő konténer: space-y-8 helyett space-y-6 a szűkebb térközökért -->
+    <div id="app" class="w-full max-w-4xl bg-white p-6 sm:p-8 rounded-xl shadow-2xl space-y-6">
+        <header class="text-center border-b pb-4">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800 flex items-center justify-center gap-3">
+                Gyöngyfűzés Kihívás
+                <!-- Új Szabályok gomb - A beállított custom-button stílust használja -->
+                <button onclick="showRules()" class="ml-4 py-1 px-3 text-sm font-semibold rounded-full text-indigo-700 bg-indigo-100 hover:bg-indigo-200 custom-button shadow-md">
+                    Szabályok
+                </button>
+            </h1>
+            <!-- Eltávolított bevezető mondat (a felhasználó kérése alapján) -->
+        </header>
+
+        <!-- 1. Kihívás kiválasztása -->
+        <section class="bg-blue-50 p-5 rounded-lg border-2 border-blue-200 shadow-inner">
+            <h2 class="text-xl font-semibold text-blue-800 mb-4">1. Válaszd ki a kihívást</h2>
+            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                <!-- Challenge gombok: Hozzáadtam a colored-button osztályt az extra mélységért -->
+                <button onclick="setChallenge('wonderful')"
+                        class="challenge-button colored-button flex-1 py-3 px-4 rounded-lg text-lg font-medium custom-button transition duration-150 ease-in-out bg-green-500 text-white hover:bg-green-600 shadow-xl">
+                    Csodálatos Lánc (Párok)
+                </button>
+                <button onclick="setChallenge('fascinating')"
+                        class="challenge-button colored-button flex-1 py-3 px-4 rounded-lg text-lg font-medium custom-button transition duration-150 ease-in-out bg-purple-500 text-white hover:bg-purple-600 shadow-xl">
+                    Lenyűgöző Lánc (Hármasok)
+                </button>
+                <button onclick="setChallenge('fantastic')"
+                        class="challenge-button colored-button flex-1 py-3 px-4 rounded-lg text-lg font-medium custom-button transition duration-150 ease-in-out bg-orange-500 text-white hover:bg-orange-600 shadow-xl">
+                    Fantasztikus Lánc (Négyesek)
+                </button>
+            </div>
+            <p id="challenge-status" class="mt-4 text-center font-bold text-lg"></p>
+        </section>
+
+        <!-- 2. Lánc építése -->
+        <section class="space-y-4" id="bead-builder-section">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">2. Építsd meg a láncot</h2>
+
+            <!-- Lánc Vizuális Megjelenítése -->
+            <div id="bead-chain-display" class="min-h-[60px] p-3 bg-gray-50 border border-gray-200 rounded-lg flex flex-wrap items-center justify-center overflow-x-auto shadow-inner">
+                <p class="text-gray-400 italic" id="empty-message">Kezdd el hozzáadni a gyöngyöket a gombokkal!</p>
+            </div>
+
+            <!-- KOMBINÁLT AKCIÓGOMBOK -->
+            <div class="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                
+                <!-- 1. Piros hozzáadása - Színátmenetes stílussal -->
+                <button onclick="addBead('P')" class="py-2 px-3 rounded-md text-sm sm:text-base font-bold text-white colored-button custom-button shadow-lg flex items-center justify-center space-x-1 add-button-P">
+                    <!-- Kisebb gyöngy ikon a gombban -->
+                    <span class="bead-icon bead-P button-bead-icon" style="width: 30px; height: 30px; font-size: 1rem; margin: 0;">P</span> Piros
+                </button>
+
+                <!-- 2. Kék hozzáadása - Színátmenetes stílussal -->
+                <button onclick="addBead('K')" class="py-2 px-3 rounded-md text-sm sm:text-base font-bold text-white colored-button custom-button shadow-lg flex items-center justify-center space-x-1 add-button-K">
+                    <!-- Kisebb gyöngy ikon a gombban -->
+                    <span class="bead-icon bead-K button-bead-icon" style="width: 30px; height: 30px; font-size: 1rem; margin: 0;">K</span> Kék
+                </button>
+                
+                <!-- 3. Utolsó Törlése - Másodlagos stílussal -->
+                <button onclick="removeLastBead()" class="py-2 px-3 rounded-md text-sm sm:text-base font-bold text-gray-700 bg-gray-200 hover:bg-gray-300 custom-button shadow-md remove-button">
+                    Törlés
+                </button>
+
+                <!-- 4. Értékelés (fő CTA) - Színátmenetes stílussal -->
+                <button onclick="evaluateChain()" id="evaluate-button" disabled
+                        class="col-span-2 sm:col-span-1 py-2 px-3 rounded-md text-sm sm:text-base font-extrabold text-white custom-button shadow-xl evaluate-cta disabled:bg-gray-400 disabled:shadow-none disabled:transform-none transition duration-150 ease-in-out">
+                    Értékelés
+                </button>
+            </div>
+        </section>
+
+        <!-- 3. Értékelés eredménye -->
+        <section id="evaluation-result-section" style="display: none;">
+            <div id="result-message" class="p-5 rounded-lg border-l-4 text-gray-700 font-medium">
+                <!-- Az eredmény itt jelenik meg -->
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Globális állapotváltozók
+        let currentChain = []; // A lánc gyöngyei (pl. ['P', 'K', 'K'])
+        let challengeType = null; // 'wonderful', 'fascinating' vagy 'fantastic'
+
+        // DOM elemek
+        const challengeStatusEl = document.getElementById('challenge-status');
+        const beadChainDisplayEl = document.getElementById('bead-chain-display');
+        const emptyMessageEl = document.getElementById('empty-message');
+        const evaluationResultSectionEl = document.getElementById('evaluation-result-section');
+        const resultMessageEl = document.getElementById('result-message');
+        const evaluateButtonEl = document.getElementById('evaluate-button');
+        const challengeButtons = document.querySelectorAll('.challenge-button');
+
+        /**
+         * Beállítja a kiválasztott kihívás típusát.
+         * @param {string} type - 'wonderful', 'fascinating' vagy 'fantastic'.
+         */
+        function setChallenge(type) {
+            challengeType = type;
+            currentChain = []; // Új kihívás esetén töröljük a láncot
+            updateUI();
+            
+            // UI frissítése (Egyszerűsített szöveg: nincs ismétlődő gyöngypáros/gyöngyhármas/gyöngynégyes)
+            // Minden gombról eltávolítjuk a kiemelést
+            challengeButtons.forEach(btn => btn.classList.remove('ring-4', 'ring-offset-2', 'ring-green-300', 'ring-purple-300', 'ring-orange-300'));
+            
+            let statusText;
+            let ringColorClass;
+
+            if (type === 'wonderful') {
+                statusText = "Kiválasztva: Csodálatos Lánc (nincs ismétlődő gyöngypáros).";
+                ringColorClass = 'ring-green-300';
+            } else if (type === 'fascinating') {
+                statusText = "Kiválasztva: Lenyűgöző Lánc (nincs ismétlődő gyöngyhármas).";
+                ringColorClass = 'ring-purple-300';
+            } else if (type === 'fantastic') {
+                statusText = "Kiválasztva: Fantasztikus Lánc (nincs ismétlődő gyöngynégyes).";
+                ringColorClass = 'ring-orange-300';
+            }
+
+            challengeStatusEl.textContent = statusText;
+            
+            // Megkeressük a gombot, amelyik elindította az eseményt, és alkalmazzuk a gyűrűt
+            const targetButton = Array.from(challengeButtons).find(btn => btn.getAttribute('onclick').includes(`'${type}'`));
+            if (targetButton) {
+                targetButton.classList.add('ring-4', 'ring-offset-2', ringColorClass);
+            }
+            
+            evaluationResultSectionEl.style.display = 'none';
+        }
+
+        /**
+         * Gyöngy hozzáadása a lánchoz.
+         * @param {string} bead - 'P' vagy 'K'.
+         */
+        function addBead(bead) {
+            if (!challengeType) {
+                showModal('Figyelem!', "Először válaszd ki, hogy Csodálatos, Lenyűgöző vagy Fantasztikus láncot szeretnél építeni!", 'text-yellow-600');
+                return;
+            }
+            currentChain.push(bead);
+            updateUI();
+        }
+
+        /**
+         * Az utolsó gyöngy eltávolítása a láncból.
+         */
+        function removeLastBead() {
+            currentChain.pop();
+            updateUI();
+        }
+
+        /**
+         * Frissíti a lánc vizuális megjelenítését és az Értékelés gomb állapotát.
+         */
+        function updateUI() {
+            // Gyöngyök frissítése
+            beadChainDisplayEl.innerHTML = '';
+            if (currentChain.length === 0) {
+                emptyMessageEl.style.display = 'block';
+                beadChainDisplayEl.appendChild(emptyMessageEl);
+            } else {
+                emptyMessageEl.style.display = 'none';
+                currentChain.forEach((bead) => {
+                    const beadEl = document.createElement('div');
+                    beadEl.className = `bead-icon bead-${bead}`;
+                    beadEl.textContent = bead;
+                    beadChainDisplayEl.appendChild(beadEl);
+                });
+            }
+            
+            // Gomb és szekciók állapotának frissítése
+            let requiredLength = 0;
+            if (challengeType === 'wonderful') requiredLength = 2;
+            else if (challengeType === 'fascinating') requiredLength = 3;
+            else if (challengeType === 'fantastic') requiredLength = 4; // Fantasztikus lánc min. 4 gyöngy
+            
+            // Az "Értékelés" gomb tiltása/engedélyezése
+            evaluateButtonEl.disabled = currentChain.length < requiredLength;
+            evaluationResultSectionEl.style.display = 'none';
+        }
+
+        /**
+         * Kiértékeli a láncot a kiválasztott kihívás alapján.
+         */
+        function evaluateChain() {
+            if (!challengeType || currentChain.length === 0) {
+                showModal('Figyelem!', "Válaszd ki a kihívást és építs láncot a kiértékeléshez.", 'text-yellow-600');
+                return;
+            }
+
+            const chainString = currentChain.join('');
+            
+            let isSuccessful = false;
+            let resultDetails = '';
+            
+            if (challengeType === 'wonderful') {
+                // Csodálatos Lánc (Párok - hossza 2)
+                const evaluation = checkChain(chainString, 2, 'Csodálatos', 'gyöngypárost', 'gyöngypáros', 'PK és KP különböző');
+                isSuccessful = evaluation.isSuccessful;
+                resultDetails = evaluation.message;
+            } else if (challengeType === 'fascinating') {
+                // Lenyűgöző Lánc (Hármasok - hossza 3)
+                const evaluation = checkChain(chainString, 3, 'Lenyűgöző', 'gyöngyhármast', 'gyöngyhármas', 'a gyöngyök sorrendje is számít');
+                isSuccessful = evaluation.isSuccessful;
+                resultDetails = evaluation.message;
+            } else if (challengeType === 'fantastic') {
+                // Fantasztikus Lánc (Négyesek - hossza 4)
+                const evaluation = checkChain(chainString, 4, 'Fantasztikus', 'gyöngynégyest', 'gyöngynégyes', 'a gyöngyök sorrendje is számít, pl. PPKK ismétlődése tilos');
+                isSuccessful = evaluation.isSuccessful;
+                resultDetails = evaluation.message;
+            }
+
+            displayResult(isSuccessful, resultDetails);
+        }
+
+        /**
+         * Általános lánc ellenőrző logika.
+         * @param {string} chain - A teljes lánc stringként.
+         * @param {number} segmentLength - A vizsgált szegmens hossza (2 pár, 3 hármas, 4 négyes).
+         * @param {string} challengeName - A kihívás neve.
+         * @param {string} segmentNameAccusative - A szegmens neve (párost/hármast/négyest) - Tárgyeset (t).
+         * @param {string} segmentNameNominative - A szegmens neve (páros/hármas/négyes) - Alanyeset (t nélkül).
+         * @param {string} ruleNote - A szabály kiegészítő megjegyzése.
+         * @returns {{isSuccessful: boolean, message: string}}
+         */
+        function checkChain(chain, segmentLength, challengeName, segmentNameAccusative, segmentNameNominative, ruleNote) {
+            if (chain.length < segmentLength) {
+                return { isSuccessful: false, message: `A lánc túl rövid a kiértékeléshez. Minimum ${segmentLength} gyöngy szükséges.` };
+            }
+
+            const segments = {}; // Párosok/hármasok/négyesek gyakoriságának tárolása
+            let firstDuplicate = null;
+            
+            // Végigmegyünk a láncon, és kiválasztjuk az összes szomszédos szegmenst
+            for (let i = 0; i <= chain.length - segmentLength; i++) {
+                const segment = chain.substring(i, i + segmentLength);
+                segments[segment] = (segments[segment] || 0) + 1;
+                
+                // Ha ismétlődés van, mentjük és leállunk
+                if (segments[segment] > 1 && !firstDuplicate) {
+                    firstDuplicate = { segment, index: i };
+                }
+            }
+
+            if (firstDuplicate) {
+                // SIKERTELEN 
+                const segment = firstDuplicate.segment;
+                
+                // Megkeressük az ELSŐ ismétlődő példát a hiba bemutatásához
+                const firstIndex = chain.indexOf(segment);
+                
+                // A második előfordulás (ez az i index, ahol a duplikátumot találtuk)
+                const secondIndex = firstDuplicate.index; 
+
+                // Kiemeljük az előfordulásokat a láncban 
+                const highlightedChain = Array.from(chain).map((char, idx) => {
+                    let text = char;
+                    const isHighlighted = (idx >= firstIndex && idx < firstIndex + segmentLength) || 
+                                          (idx >= secondIndex && idx < secondIndex + segmentLength);
+                    
+                    if (isHighlighted) {
+                        text = `<span class="font-extrabold text-red-600">${char}</span>`;
+                    }
+                    return text;
+                }).join('');
+
+
+                const message = `
+                    <p class="mb-2"><strong>Sajnálom, a láncod NEM ${challengeName}!</strong></p>
+                    <p>Ennek oka, hogy a <strong>${segment}</strong> ${segmentNameNominative} ismétlődik a láncban.</p>
+                    <p class="text-sm italic text-gray-500">(${ruleNote}.)</p>
+                    <p class="mt-3 p-3 bg-red-100 rounded-lg text-lg">
+                        Lánc: ${highlightedChain}
+                    </p>
+                `;
+                
+                return { isSuccessful: false, message: message };
+                
+            } else {
+                // SIKERES
+                const message = `
+                    <p class="text-2xl font-bold mb-2">🎉 Gratulálok! A láncod ${challengeName.toUpperCase()}! 🎉</p>
+                    <p>Nem találtam két azonos ${segmentNameAccusative} a láncban.</p>
+                    <p class="mt-2 text-sm italic text-gray-500">Láncod hossza: ${chain.length} gyöngy.</p>
+                `;
+                return { isSuccessful: true, message: message };
+            }
+        }
+
+        /**
+         * Az eredményt jeleníti meg a felhasználónak.
+         * @param {boolean} success - Sikerült-e a kihívás.
+         * @param {string} message - A kiírandó üzenet.
+         */
+        function displayResult(success, message) {
+            evaluationResultSectionEl.style.display = 'block';
+            
+            // ÚJ: Görgessük az eredmény szekciót a látómezőbe.
+            evaluationResultSectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            resultMessageEl.innerHTML = message;
+
+            if (success) {
+                resultMessageEl.className = 'p-5 rounded-lg border-l-4 border-green-500 bg-green-100 text-green-800 font-medium';
+            } else {
+                resultMessageEl.className = 'p-5 rounded-lg border-l-4 border-red-500 bg-red-100 text-red-800 font-medium';
+            }
+        }
+        
+        /**
+         * Megjeleníti a játékszabályokat egy modális ablakban.
+         */
+        function showRules() {
+            const rulesContent = `
+                <p class="mb-3">Ez a játék a gyöngylánc ismétlődő mintáit vizsgálja. A cél: minél hosszabb, a kiválasztott szabálynak megfelelő láncot építeni!</p>
+                <div class="p-3 my-2 bg-green-50 rounded-lg border border-green-200">
+                    <strong class="text-green-700">Csodálatos Lánc (Párok):</strong>
+                    <p class="text-sm mt-1">NINCS két azonos gyöngypáros ismétlődés a láncban. (Minimális hossz: 2 gyöngy. Pl. PK ismétlődése tilos)</p>
+                </div>
+                <div class="p-3 my-2 bg-purple-50 rounded-lg border border-purple-200">
+                    <strong class="text-purple-700">Lenyűgöző Lánc (Hármasok):</strong>
+                    <p class="text-sm mt-1">NINCS két azonos gyöngyhármas ismétlődés a láncban. (Minimális hossz: 3 gyöngy. Pl. KPK ismétlődése tilos)</p>
+                </div>
+                <!-- ÚJ SZABÁLY: Fantasztikus Lánc -->
+                <div class="p-3 my-2 bg-orange-50 rounded-lg border border-orange-200">
+                    <strong class="text-orange-700">Fantasztikus Lánc (Négyesek):</strong>
+                    <p class="text-sm mt-1">NINCS két azonos gyöngynégyes ismétlődés a láncban. (Minimális hossz: 4 gyöngy. Pl. PPKK ismétlődése tilos)</p>
+                </div>
+            `;
+            showModal('Játékszabályok és Használat', rulesContent, 'text-indigo-600');
+        }
+
+        /**
+         * Egyedi modális/üzenet ablak.
+         * @param {string} title - A modális ablak címe.
+         * @param {string} msg - A megjelenítendő tartalom (HTML is lehet).
+         * @param {string} titleColor - Tailwind osztály a cím színéhez.
+         */
+        function showModal(title, msg, titleColor = 'text-red-600') {
+            const tempEl = document.createElement('div');
+            tempEl.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
+            tempEl.innerHTML = `
+                <div class="bg-white p-6 rounded-xl shadow-2xl max-w-lg w-full space-y-4 transform transition-all duration-300 scale-100 opacity-100">
+                    <h3 class="text-xl font-bold ${titleColor}">${title}</h3>
+                    <div class="text-gray-700 leading-relaxed">${msg}</div>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                        class="w-full py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 custom-button">
+                        Bezár
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(tempEl);
+        }
+
+        // Kezdeti állapot beállítása
+        updateUI();
+    </script>
+
+</body>
+</html>
